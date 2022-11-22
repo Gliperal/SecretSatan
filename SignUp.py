@@ -2,10 +2,23 @@
 
 import discord
 from dotenv import load_dotenv
+import os
+import traceback
+
 from util import message_Admin
+from logfile import log
+from SatanBot import SatanBot, State
 
 load_dotenv()
-ADMIN = os.getenv('ADMIN')
+ADMIN = os.getenv('DEVELOPER_ID')
+
+class SignUpButtonView(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=None)
+
+    @discord.ui.button(label='Sign Up for Secret Satan', style=discord.ButtonStyle.green, custom_id='persistent_view:SignUpButton')
+    async def green(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.send_modal(SignUpFormModal())
 
 class SignUpFormModal(discord.ui.Modal, title='Sign Up for Secret Puzzle Satan 2022'):
     form_realName = discord.ui.TextInput(
@@ -45,6 +58,7 @@ class SignUpFormModal(discord.ui.Modal, title='Sign Up for Secret Puzzle Satan 2
 
     async def on_submit(self, interaction: discord.Interaction):
         try:
+            user_id = str(interaction.user.id)
             name = interaction.user.name
             if self.form_realName.value != "":
                 name += f" (real name {self.form_realName.value})"
@@ -55,23 +69,26 @@ class SignUpFormModal(discord.ui.Modal, title='Sign Up for Secret Puzzle Satan 2
                 f"\n\nFavorite Puzzle Types: {self.form_favoritePuzzleTypes.value}"+ \
                 f"\n\nAnything Else: {self.form_anythingElse.value}")
 
+            #save in database
+            preferences = {
+                "name": name,
+                "realname": self.form_realName.value,
+                "about_you": self.form_aboutYou.value,
+                "puzzles_enjoyed": self.form_puzzlesEnjoyed.value,
+                "favorite_puzzle_types": self.form_favoritePuzzleTypes.value,
+                "anything_else": self.form_anythingElse.value,
+            }
+            if SatanBot.state == State.RECRUITING:
+                async with SatanBot.lock:
+                    SatanBot.satans[user_id]['preferences'] = preferences
+            else:
+                await interaction.response.send_message('Sorry, sign up period has ended.')
+
+            #log as backup
+            log(f'Sign up by {user_id}: {preferences}')
+
             #send back to user for verification
             await interaction.response.send_message(f"OK, you are all signed up!  \nHere's the information I received. If you need to change any of it, feel free to hit the Sign Up button and fill in the whole form again - we'll only use the newest entry.  \n\nIf you need to cancel for any reason, please contact {ADMIN} as soon as possible. \n\nLooking forward to it!", embed=embed)
-
-            #save in database
-            puzzlemessage = {
-                    "id" : str(interaction.user.id),
-                    "username": interaction.user.name,
-                    "signup_realname": self.form_realName.value,
-                    "signup_about_you": self.form_aboutYou.value,
-                    "signup_puzzles_enjoyed": self.form_puzzlesEnjoyed.value,
-                    "signup_favorite_puzzle_types": self.form_favoritePuzzleTypes.value,
-                    "signup_anything_else": self.form_anythingElse.value,
-                }
-            db_items("Santas2022").upsert_item(body=puzzlemessage)
-
-            #send to BenceJoful as backup
-            await message_Admin('Sign up by '+str(interaction.user.id), embed=discord.Embed(description=str(puzzlemessage)))
         except:
             await message_Admin('Error in processing sign up form submission', embed=discord.Embed(description=traceback.format_exc()))
 
