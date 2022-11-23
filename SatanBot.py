@@ -13,6 +13,7 @@ class SatanBot():
     #satans = {}
     #satans = {'310555686742261769': {'preferences': {'name': 'Gliperal', 'realname': '', 'about_you': 'A', 'puzzles_enjoyed': 'B', 'favorite_puzzle_types': 'C', 'anything_else': 'D'}}}
     satans = {'310555686742261769': {'preferences': {'name': 'Gliperal', 'realname': '', 'about_you': 'A', 'puzzles_enjoyed': 'B', 'favorite_puzzle_types': 'C', 'anything_else': 'D'}, 'victim': '310555686742261769'}}
-    state = State.RECRUITING
+    #state = State.RECRUITING
+    state = State.SETTING
     lock = asyncio.Lock()
 

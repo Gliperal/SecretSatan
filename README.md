@@ -7,3 +7,4 @@ python main.py
 	ADMIN=name#number
 	ADMIN_ID=00000000000000000
 	DISCORD_TOKEN=[oauth2 token]
+	TMP_FOLDER=/tmp/SecretSatan

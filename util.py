@@ -1,6 +1,8 @@
 import discord
-import os
 from dotenv import load_dotenv
+import os
+import requests
+import shutil
 
 from SatanBot import SatanBot
 
@@ -18,4 +20,12 @@ async def admin():
 
 async def message_Admin(text, embed = None):
     await (await admin()).send(text, embed=embed)
+
+def download_image(url, path):
+    r = requests.get(url, stream=True)
+    if r.status_code != 200:
+        raise Exception(f'Download failed with status code {r.status_code}')
+    with open(path, 'wb') as f:
+        r.raw.decode_content = True
+        shutil.copyfileobj(r.raw, f)
 

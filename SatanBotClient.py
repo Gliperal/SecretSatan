@@ -1,23 +1,72 @@
 import discord
+import json
+import os
 import random
 
 from logfile import log
 from SignUp import SignUpButtonView
+from SubmitPuzzle import SubmitPuzzleButtonView
 from SatanBot import SatanBot, State
-from util import admin, get_user_by_id
+from util import admin, get_user_by_id, download_image
+
+from dotenv import load_dotenv
+
+load_dotenv()
+TMP_FOLDER = os.getenv('TMP_FOLDER')
+
+class PuzzlePost:
+    def __init__(self, message):
+        self.content = message.content
+        self.files = [
+            {'url': attachment.url, 'filename': attachment.filename}
+            for attachment in message.attachments
+        ]
+        self.suppress_embeds = message.flags.suppress_embeds
+
+    def __str__(self):
+        data = {
+            'content': self.content,
+            'files': self.files,
+            'suppress_embeds': self.suppress_embeds
+        }
+        return f'PuzzlePost({json.dumps(data)})'
+
+    async def send(self, channel, view=None):
+        # TODO catch failures
+        n = len(self.files)
+        local_files = []
+        if not os.path.exists(TMP_FOLDER):
+            os.mkdir(TMP_FOLDER)
+        for i in range(n):
+            file = self.files[i]
+            path = f'{TMP_FOLDER}/{i}'
+            if os.path.exists(path):
+                os.remove(path)
+            download_image(file['url'], path)
+            local_files.append(discord.File(path, filename=file['filename']))
+        await channel.send(
+            content=self.content,
+            files=local_files,
+            suppress_embeds=self.suppress_embeds,
+            view=view
+        )
+        for i in range(n):
+            os.remove(f'{TMP_FOLDER}/{i}')
 
 async def status(channel):
     async with SatanBot.lock:
-        if SatanBot.state == RECRUITING:
-            channel.send(f'Recruited {len(SatanBot.keys())} satans so far')
-        elif SatanBot.state == RANDOMIZING:
-            channel.send('Randomizing satans and sending out victims')
-        elif SatanBot.state == SETTING:
-            channel.send(f'Setting in progress') # TODO how many completed ?
-        elif SatanBot.state == DELIVERING:
-            channel.send(f'Merry Christmas')
+        if SatanBot.state == State.RECRUITING:
+            await channel.send(f'Recruited {len(SatanBot.keys())} satans so far')
+        elif SatanBot.state == State.RANDOMIZING:
+            await channel.send('Randomizing satans and sending out victims')
+        elif SatanBot.state == State.SETTING:
+            satan_ids = list(SatanBot.satans.keys())
+            gifted = [sid for sid in satan_ids if 'gift' in SatanBot.satans[sid]]
+            await channel.send(f'Setting in progress: {len(gifted)}/{len(satan_ids)} gifts completed')
+        elif SatanBot.state == State.DELIVERING:
+            await channel.send(f'Merry Christmas')
         else:
-            channel.send('I have no idea what it going on')
+            await channel.send('I have no idea what it going on')
 
 async def randomize(channel):
     async with SatanBot.lock:
@@ -57,7 +106,9 @@ class SatanBotClient(discord.Client):
         super().__init__(intents=intents)
 
     async def setup_hook(self) -> None:
+        # why do I need this?
         self.add_view(SignUpButtonView())
+        self.add_view(SubmitPuzzleButtonView(None, None))
 
     async def on_ready(self):
         print(f'{self.user} connected.', flush=True)
@@ -81,13 +132,13 @@ class SatanBotClient(discord.Client):
                 if str(message.author.id) not in SatanBot.satans:
                     if SatanBot.state == State.RECRUITING:
                         log(f'Welcome message sent to {message.author.id}')
-                        await message.channel.send('hi', view=SignUpButtonView())
+                        await message.channel.send('', view=SignUpButtonView())
                         SatanBot.satans[str(message.author.id)] = {}
                     else:
                         await message.channel.send('Sorry, sign up period has ended.')
                 elif SatanBot.state == State.SETTING:
+                    puzzle_post = PuzzlePost(message)
                     satan_id = str(message.author.id)
-                    victim_id = SatanBot.satans[satan_id]
-                    # TODO Copy message back exactly as sent "is this how you want it? if so, click the button"
-                    # If all good, store the message + images + embeds + other files in the database and send message "recorded, if you need to change anything before Dec 18, simply resend the message"
+                    victim_id = SatanBot.satans[satan_id]['victim']
+                    await puzzle_post.send(message.channel, SubmitPuzzleButtonView(victim_id, puzzle_post))
 
