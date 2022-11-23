@@ -71,32 +71,45 @@ async def status(channel):
 async def randomize(channel):
     async with SatanBot.lock:
         if SatanBot.state != State.RECRUITING:
-            await message.channel.send('Must be in recruiting state to do that')
-        else:
-            SatanBot.state = State.RANDOMIZING
-            satan_ids = list(SatanBot.satans.keys())
-            random.shuffle(satan_ids)
-            log(f'Randomization result: {satan_ids}')
-            n = len(satan_ids)
-            for i in range(n):
-                satan_id = satan_ids[i]
-                victim_id = satan_ids[(i + 1) % n]
-                SatanBot.satans[satan_id]['victim'] = victim_id
-                # TODO try catch report errors
-                satan = await get_user_by_id(satan_id)
-                victim = await get_user_by_id(victim_id)
-                preferences = SatanBot.satans[victim_id]['preferences']
-                embed = discord.Embed(description=f"Name: {preferences['name']}"+ \
-                    f"\n\nAbout Them: {preferences['about_you']}"+ \
-                    f"\n\nPuzzles They Enjoy: {preferences['puzzles_enjoyed']}"+ \
-                    f"\n\nFavorite Puzzle Types: {preferences['favorite_puzzle_types']}"+ \
-                    f"\n\nAnything Else: {preferences['anything_else']}")
-                await satan.send('Your victim has been assigned! When finished setting their puzzle, send it in this DM exactly how you wish it to appear (including any attached images and files).', embed=embed)
-                print(SatanBot.satans, flush=True)
-            SatanBot.state = State.SETTING
+            await channel.send('Must be in recruiting state to do that')
+            return
+        SatanBot.state = State.RANDOMIZING
+        satan_ids = list(SatanBot.satans.keys())
+        random.shuffle(satan_ids)
+        log(f'Randomization result: {satan_ids}')
+        n = len(satan_ids)
+        for i in range(n):
+            satan_id = satan_ids[i]
+            victim_id = satan_ids[(i + 1) % n]
+            SatanBot.satans[satan_id]['victim'] = victim_id
+            # TODO try catch report errors
+            satan = await get_user_by_id(satan_id)
+            victim = await get_user_by_id(victim_id)
+            preferences = SatanBot.satans[victim_id]['preferences']
+            embed = discord.Embed(description=f"Name: {preferences['name']}"+ \
+                f"\n\nAbout Them: {preferences['about_you']}"+ \
+                f"\n\nPuzzles They Enjoy: {preferences['puzzles_enjoyed']}"+ \
+                f"\n\nFavorite Puzzle Types: {preferences['favorite_puzzle_types']}"+ \
+                f"\n\nAnything Else: {preferences['anything_else']}")
+            await satan.send('Your victim has been assigned! When finished setting their puzzle, send it in this DM exactly how you wish it to appear (including any attached images and files).', embed=embed)
+            print(SatanBot.satans, flush=True)
+        SatanBot.state = State.SETTING
+
+# TODO Emergency gifting: anyone who doesn't yet have a gift, asign them a new gifter (not themselves)
 
 async def distribute(channel):
-    pass
+    async with SatanBot.lock:
+        if SatanBot.state != State.SETTING:
+            await channel.send('Must be in setting state to do that')
+            return
+        for victim_id in SatanBot.satans:
+            if 'gift' not in SatanBot.satans[victim_id]:
+                await channel.send('Still missing gifts')
+                return
+        for victim_id in SatanBot.satans:
+            victim = await get_user_by_id(victim_id)
+            await victim.send('Incoming message from Satan:')
+            await SatanBot.satans[victim_id]['gift'].send(victim)
 
 class SatanBotClient(discord.Client):
     def __init__(self):
@@ -125,7 +138,7 @@ class SatanBotClient(discord.Client):
                 await randomize(message.channel)
                 return
             if message.content == 'begin distribution':
-                await distribute()
+                await distribute(message.channel)
                 return
         if message.channel.type == discord.ChannelType.private:
             async with SatanBot.lock:
