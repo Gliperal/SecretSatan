@@ -12,14 +12,10 @@ class State(str, Enum):
     DELIVERING = 'DELIVERING'
 
 class SatanBot():
-    #client = SatanBotClient()
     client=None
     satans = {}
-    #satans = {'310555686742261769': {'preferences': {'name': 'Gliperal', 'realname': '', 'about_you': 'A', 'puzzles_enjoyed': 'B', 'favorite_puzzle_types': 'C', 'anything_else': 'D'}}}
-    #satans = {'310555686742261769': {'preferences': {'name': 'Gliperal', 'realname': '', 'about_you': 'A', 'puzzles_enjoyed': 'B', 'favorite_puzzle_types': 'C', 'anything_else': 'D'}, 'victim': '310555686742261769'}}
     victims = {}
     state = State.RECRUITING
-    #state = State.SETTING
     lock = asyncio.Lock()
 
     @staticmethod

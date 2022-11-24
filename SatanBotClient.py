@@ -2,12 +2,13 @@ import discord
 import json
 import os
 import random
+import traceback
 
 from logfile import log
 from SignUp import SignUpButtonView
 from SubmitPuzzle import SubmitPuzzleButtonView
 from SatanBot import SatanBot, State
-from util import admin, get_user_by_id, download_image
+from util import admin, message_Admin, get_user_by_id, download_image
 
 from dotenv import load_dotenv
 
@@ -46,7 +47,6 @@ class PuzzlePost:
         return f'PuzzlePost({json.dumps(self.toDict())})'
 
     async def send(self, channel, view=None):
-        # TODO catch failures
         n = len(self.files)
         local_files = []
         if not os.path.exists(TMP_FOLDER):
@@ -115,13 +115,34 @@ async def randomize(channel):
 
 async def emergency(channel, emergency_setters):
     setters = json.loads(emergency_setters)
+    for i in range(len(setters)):
+        # make sure each id is a valid id
+        setters[i] = str(setters[i])
+        await get_user_by_id(setters[i])
     async with SatanBot.lock:
         if SatanBot.state != State.SETTING:
             await channel.send('Must be in setting state to do that')
             return
         victim_ids = list(SatanBot.victims.keys())
         ungifted = [vid for vid in victim_ids if 'gift' not in SatanBot.victims[vid]]
-    # TODO Emergency gifting: anyone who doesn't yet have a gift, asign them a new gifter (not themselves)
+        n = len(ungifted)
+        if len(setters) > n:
+            setters = setters[:n]
+        ungifted_nonsetters = [s for s in ungifted if s not in setters]
+        ungifted_setters = [s for s in setters if s in ungifted]
+        gifted_setters = [s for s in setters if s not in ungifted]
+        order = list(range(n))
+        random.shuffle(order)
+        victims = ungifted_setters + ungifted_nonsetters
+        satans = ungifted_setters + gifted_setters
+        log(f'Emergency setter assignments:\n\tvictims={victims}\n\tsatans={satans}\n\torder={order}\n')
+        for i in range(n):
+            satan_id = satans[order[i]]
+            victim_id = victims[order[(i + 1) % n]]
+            SatanBot.satans[satan_id] = {'victim': victim_id}
+        for satan_id in satans:
+            await send_setter_message(satan_id)
+        SatanBot.state = State.EMERGENCY
 
 async def distribute(channel):
     async with SatanBot.lock:
@@ -137,6 +158,40 @@ async def distribute(channel):
             victim = await get_user_by_id(victim_id)
             await victim.send('Incoming message from Satan:')
             await SatanBot.victims[victim_id]['gift'].send(victim)
+
+async def handle_message(message):
+    if message.author == await admin():
+        if message.content == 'status':
+            await status(message.channel)
+            return
+        if message.content == 'begin randomization':
+            await randomize(message.channel)
+            return
+        if message.content == 'begin distribution':
+            await distribute(message.channel)
+            return
+        if message.content.startswith('emergency'):
+            await emergency(message.channel, message.content[9:])
+            return
+        if message.content == 'save':
+            await SatanBot.save()
+            return
+        if message.content == 'load':
+            await SatanBot.load()
+            return
+    if message.channel.type == discord.ChannelType.private:
+        async with SatanBot.lock:
+            if str(message.author.id) not in SatanBot.victims:
+                if SatanBot.state == State.RECRUITING:
+                    log(f'Welcome message sent to {message.author.id}')
+                    await message.channel.send('', view=SignUpButtonView())
+                else:
+                    await message.channel.send('Sorry, sign up period has ended.')
+            elif SatanBot.state == State.SETTING:
+                puzzle_post = PuzzlePost.fromMessage(message)
+                satan_id = str(message.author.id)
+                victim_id = SatanBot.satans[satan_id]['victim']
+                await puzzle_post.send(message.channel, SubmitPuzzleButtonView(victim_id, puzzle_post))
 
 class SatanBotClient(discord.Client):
     def __init__(self):
@@ -158,37 +213,11 @@ class SatanBotClient(discord.Client):
         # Ignore own messages
         if message.author == self.user:
             return
-        if message.author == await admin():
-            if message.content == 'status':
-                await status(message.channel)
-                return
-            if message.content == 'begin randomization':
-                await randomize(message.channel)
-                return
-            if message.content == 'begin distribution':
-                await distribute(message.channel)
-                return
-            if message.content.startswith('emergency'):
-                await emergency(message.channel, message.content[9:])
-                return
-            if message.content == 'save':
-                await SatanBot.save()
-                return
-            if message.content == 'load':
-                await SatanBot.load()
-                return
-        if message.channel.type == discord.ChannelType.private:
-            async with SatanBot.lock:
-                if str(message.author.id) not in SatanBot.victims:
-                    if SatanBot.state == State.RECRUITING:
-                        #SatanBot.victims[str(message.author.id)] = {}
-                        log(f'Welcome message sent to {message.author.id}')
-                        await message.channel.send('', view=SignUpButtonView())
-                    else:
-                        await message.channel.send('Sorry, sign up period has ended.')
-                elif SatanBot.state == State.SETTING:
-                    puzzle_post = PuzzlePost.fromMessage(message)
-                    satan_id = str(message.author.id)
-                    victim_id = SatanBot.satans[satan_id]['victim']
-                    await puzzle_post.send(message.channel, SubmitPuzzleButtonView(victim_id, puzzle_post))
+        try:
+            await handle_message(message)
+        except:
+            error_details = f'User: {message.author}\n\n' + \
+                f'Message: {message.content}\n\n' + \
+                f'{traceback.format_exc()}'
+            await message_Admin('Error in message handling', embed=discord.Embed(description=error_details))
 
