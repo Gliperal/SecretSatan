@@ -80,7 +80,7 @@ class SignUpFormModal(discord.ui.Modal, title='Sign Up for Secret Puzzle Satan 2
             }
             if SatanBot.state == State.RECRUITING:
                 async with SatanBot.lock:
-                    SatanBot.satans[user_id]['preferences'] = preferences
+                    SatanBot.victims[user_id]['preferences'] = preferences
             else:
                 await interaction.response.send_message('Sorry, sign up period has ended.')
 
