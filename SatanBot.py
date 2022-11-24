@@ -1,6 +1,7 @@
 import asyncio
-import json
+from copy import deepcopy
 from enum import Enum
+import json
 
 BACKUP_FILE = 'bot.json'
 
@@ -21,7 +22,7 @@ class SatanBot():
     @staticmethod
     async def save():
         async with SatanBot.lock:
-            victims = SatanBot.victims
+            victims = deepcopy(SatanBot.victims)
             for victim_id in victims:
                 if 'gift' in victims[victim_id]:
                     victims[victim_id]['gift'] = victims[victim_id]['gift'].toDict()
