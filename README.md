@@ -1,5 +1,9 @@
-python -m pip install discord.py
-python -m pip install python-dotenv
+#python -m pip install discord.py
+#python -m pip install discord-ui
+#python -m pip install python-dotenv
+#python -m pip install requests
+
+python -m pip install -U pip discord.py python-dotenv requests
 
 python main.py
 

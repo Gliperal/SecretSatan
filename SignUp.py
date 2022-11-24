@@ -10,7 +10,7 @@ from logfile import log
 from SatanBot import SatanBot, State
 
 load_dotenv()
-ADMIN = os.getenv('DEVELOPER_ID')
+ADMIN = os.getenv('ADMIN')
 
 class SignUpButtonView(discord.ui.View):
     def __init__(self):
