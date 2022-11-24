@@ -10,9 +10,9 @@ load_dotenv()
 ADMIN = os.getenv('ADMIN_ID')
 
 async def get_user_by_id(user_id):
-    user = SatanBot.client.get_user(ADMIN)
+    user = SatanBot.client.get_user(user_id)
     if user is None:
-        user = await SatanBot.client.fetch_user(ADMIN)
+        user = await SatanBot.client.fetch_user(user_id)
     return user
 
 async def admin():

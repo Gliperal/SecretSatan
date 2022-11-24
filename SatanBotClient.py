@@ -181,7 +181,7 @@ class SatanBotClient(discord.Client):
             async with SatanBot.lock:
                 if str(message.author.id) not in SatanBot.victims:
                     if SatanBot.state == State.RECRUITING:
-                        SatanBot.victims[str(message.author.id)] = {}
+                        #SatanBot.victims[str(message.author.id)] = {}
                         log(f'Welcome message sent to {message.author.id}')
                         await message.channel.send('', view=SignUpButtonView())
                     else:
