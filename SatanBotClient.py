@@ -179,6 +179,10 @@ async def handle_message(message):
         if message.content == 'load':
             await SatanBot.load()
             return
+        if message.content.startswith('resend'):
+            satan_id = message.content[6:].strip()
+            await send_setter_message(satan_id)
+            return
     if message.channel.type == discord.ChannelType.private:
         async with SatanBot.lock:
             if str(message.author.id) not in SatanBot.victims:
