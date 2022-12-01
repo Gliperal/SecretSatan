@@ -82,18 +82,22 @@ async def status(channel):
         else:
             await channel.send('I have no idea what it going on')
 
-async def send_setter_message(satan_id):
+async def send_setter_message(satan_id, use_embed=True):
     async with SatanBot.lock:
         victim_id = SatanBot.satans[satan_id]['victim']
         satan = await get_user_by_id(satan_id)
         victim = await get_user_by_id(victim_id)
         preferences = SatanBot.victims[victim_id]['preferences']
-        embed = discord.Embed(description=f"Name: {preferences['name']}"+ \
+        embed_content = f"Name: {preferences['name']}"+ \
             f"\n\nAbout Them: {preferences['about_you']}"+ \
             f"\n\nPuzzles They Enjoy: {preferences['puzzles_enjoyed']}"+ \
             f"\n\nFavorite Puzzle Types: {preferences['favorite_puzzle_types']}"+ \
-            f"\n\nAnything Else: {preferences['anything_else']}")
-        await satan.send('Your victim has been assigned! When finished setting their puzzle, send it in this DM exactly how you wish it to appear (including any attached images and files).', embed=embed)
+            f"\n\nAnything Else: {preferences['anything_else']}"
+        if use_embed:
+            embed = discord.Embed(description=embed_content)
+            await satan.send('Your victim has been assigned! When finished setting their puzzle, send it in this DM exactly how you wish it to appear (including any attached images and files).', embed=embed)
+        else:
+            await satan.send('Your victim has been assigned! When finished setting their puzzle, send it in this DM exactly how you wish it to appear (including any attached images and files)\n\n' + embed_content)
 
 async def randomize(channel):
     async with SatanBot.lock:
@@ -179,9 +183,15 @@ async def handle_message(message):
         if message.content == 'load':
             await SatanBot.load()
             return
-        if message.content.startswith('resend'):
+        if message.content.startswith('resend_raw'):
+            satan_id = message.content[10:].strip()
+            await send_setter_message(satan_id, False)
+            await message.channel.send(f'Resent victim message to {satan_id} as raw text')
+            return
+        elif message.content.startswith('resend'):
             satan_id = message.content[6:].strip()
             await send_setter_message(satan_id)
+            await message.channel.send('Resent victim message to ' + satan_id)
             return
     if message.channel.type == discord.ChannelType.private:
         async with SatanBot.lock:
