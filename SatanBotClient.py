@@ -165,7 +165,7 @@ async def distribute(channel):
 
 async def reminder(channel, reminder_message):
     async with SatanBot.lock:
-        if SatanBot.state != State.SETTING:
+        if SatanBot.state != State.SETTING and SatanBot.state != State.EMERGENCY:
             await channel.send('Must be in setting state to do that')
             return
         if reminder_message == '':
@@ -178,6 +178,21 @@ async def reminder(channel, reminder_message):
         for sid in ungifters:
             satan = await get_user_by_id(sid)
             await satan.send(reminder_message)
+
+async def still_setting(channel):
+    async with SatanBot.lock:
+        if SatanBot.state != State.SETTING and SatanBot.state != State.EMERGENCY:
+            await channel.send('Must be in setting state to do that')
+            return
+        victim_ids = list(SatanBot.victims.keys())
+        satan_ids = list(SatanBot.satans.keys())
+        ungifted = [vid for vid in victim_ids if 'gift' not in SatanBot.victims[vid]]
+        ungifters = [sid for sid in satan_ids if SatanBot.satans[sid]['victim'] in ungifted]
+        ungifter_names = []
+        for sid in ungifters:
+            user = await get_user_by_id(sid)
+            ungifter_names.append(user.name)
+        await channel.send(', '.join(ungifter_names))
 
 async def handle_message(message):
     if message.author == await admin():
@@ -208,6 +223,9 @@ async def handle_message(message):
             satan_id = message.content[6:].strip()
             await send_setter_message(satan_id)
             await message.channel.send('Resent victim message to ' + satan_id)
+            return
+        if message.content == 'still setting':
+            await still_setting(message.channel)
             return
         if message.content.startswith('reminder'):
             await reminder(message.channel, message.content[8:].strip())
