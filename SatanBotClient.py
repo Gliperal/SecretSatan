@@ -123,6 +123,7 @@ async def emergency(channel, emergency_setters):
         # make sure each id is a valid id
         setters[i] = str(setters[i])
         await get_user_by_id(setters[i])
+    satans = None
     async with SatanBot.lock:
         if SatanBot.state != State.SETTING:
             await channel.send('Must be in setting state to do that')
@@ -144,9 +145,9 @@ async def emergency(channel, emergency_setters):
             satan_id = satans[order[i]]
             victim_id = victims[order[(i + 1) % n]]
             SatanBot.satans[satan_id] = {'victim': victim_id}
-        for satan_id in satans:
-            await send_setter_message(satan_id)
         SatanBot.state = State.EMERGENCY
+    for satan_id in satans:
+        await send_setter_message(satan_id)
 
 async def distribute(channel):
     async with SatanBot.lock:
