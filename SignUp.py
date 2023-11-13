@@ -5,9 +5,9 @@ from dotenv import load_dotenv
 import os
 import traceback
 
-from util import message_Admin
 from logfile import log
 from SatanBot import SatanBot, State
+from util import message_Admin
 
 load_dotenv()
 ADMIN = os.getenv('ADMIN')
@@ -20,7 +20,7 @@ class SignUpButtonView(discord.ui.View):
     async def green(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.response.send_modal(SignUpFormModal())
 
-class SignUpFormModal(discord.ui.Modal, title='Sign Up for Secret Puzzle Satan 2022'):
+class SignUpFormModal(discord.ui.Modal, title='Sign Up for Secret Puzzle Satan'):
     form_realName = discord.ui.TextInput(
         label='Real Name (Optional)',
         required=False,
@@ -80,7 +80,7 @@ class SignUpFormModal(discord.ui.Modal, title='Sign Up for Secret Puzzle Satan 2
             }
             if SatanBot.state == State.RECRUITING:
                 async with SatanBot.lock:
-                    SatanBot.victims[user_id] = {'preferences': preferences}
+                    SatanBot.add_satan(user_id, preferences)
             else:
                 await interaction.response.send_message('Sorry, sign up period has ended.')
 
@@ -99,4 +99,3 @@ class SignUpFormModal(discord.ui.Modal, title='Sign Up for Secret Puzzle Satan 2
 
         # Make sure we know what the error actually is
         traceback.print_tb(error.__traceback__)
-

@@ -28,4 +28,3 @@ def download_image(url, path):
     with open(path, 'wb') as f:
         r.raw.decode_content = True
         shutil.copyfileobj(r.raw, f)
-
