@@ -1,36 +1,40 @@
 # Stolen from https://github.com/BenceJoful/find-lonely-puzzles/blob/main/SearchReactions.py
 
 import discord
-from dotenv import load_dotenv
-import os
 import traceback
 
 from util import message_Admin
 from logfile import log
 from SatanBot import SatanBot, State
 
-load_dotenv()
-ADMIN = os.getenv('ADMIN')
+class DropOutButton(discord.ui.Button):
+    def __init__(self):
+        super().__init__(label='Drop Out', style=discord.ButtonStyle.red)
+
+    async def callback(self, interaction):
+        await interaction.response.send_modal(DropOutFormModal())
 
 class DropOutButtonView(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)
 
-    @discord.ui.button(label='Drop Out', style=discord.ButtonStyle.green, custom_id='persistent_view:DropOutButton')
-    async def orange(self, interaction: discord.Interaction, button: discord.ui.Button):
+    @discord.ui.button(label='Drop Out', style=discord.ButtonStyle.red, custom_id='persistent_view:DropOutButton')
+    async def clicked(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.response.send_modal(DropOutFormModal())
 
 class DropOutFormModal(discord.ui.Modal, title='Drop Out'):
     form_confirm = discord.ui.TextInput(
-        label='By dropping out of Secret Satan, any victim(s) that have already been assigned to you will be given to one of our emergency setters instead... Are you sure you want to do this? Type "confirm" in the box to confirm your intention to leave.',
+        label='Really drop out and re-assign your victims?',
         required=True,
+        placeholder='yes',
         style=discord.TextStyle.short,
         max_length=100
     )
 
     async def on_submit(self, interaction: discord.Interaction):
         try:
-            if self.form_confirm.value != 'confirm':
+            if self.form_confirm.value.lower() not in ['confirm', 'yes', 'y']:
+                await interaction.response.send_message('Please type \"yes\" into the box if you intend on leaving. Interaction cancelled.', view=DropOutButtonView())
                 return
             if SatanBot.state == State.RANDOMIZING:
                 await interaction.response.send_message('Sorry, victims are already being assigned! Try again in a few minutes.')
@@ -44,12 +48,13 @@ class DropOutFormModal(discord.ui.Modal, title='Drop Out'):
             async with SatanBot.lock:
                 if SatanBot.state != State.RECRUITING and SatanBot.state != State.SETTING:
                     raise Exception('Unknown state ' + SatanBot.state)
-                satan = SatanBot.get_satan(user_id)
-                satan['satan'] = False
+                satan = SatanBot.get_user(user_id)
+                satan['is_satan'] = False
                 satan['emergency_satan'] = False
                 if SatanBot.state == State.SETTING:
                     # reassign victims to emergency satans
-                    victims = SatanBot.get_victims_of(user_id) but only the ones without puzzles
+                    victims = SatanBot.get_victims_of(user_id)
+                    victims = [v for v in victims if 'gift' not in v]
                     while len(victims) > 0:
                         victim = victims.pop()
                         victim['satan'] = SatanBot.get_underworked_emergency_satans()[0]

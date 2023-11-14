@@ -4,17 +4,13 @@ import os
 import random
 import traceback
 
+from DropOut import DropOutButtonView
 from logfile import log
 from PuzzlePost import PuzzlePost
 from SignUp import SignUpButtonView
 from SubmitPuzzle import SubmitPuzzleView
 from SatanBot import SatanBot, State
-from util import admin, message_Admin, get_user_by_id, download_image
-
-from dotenv import load_dotenv
-
-load_dotenv()
-TMP_FOLDER = os.getenv('TMP_FOLDER')
+from util import admin, message_Admin, get_user_by_id
 
 async def status(channel):
     async with SatanBot.lock:
@@ -32,23 +28,22 @@ async def status(channel):
             await channel.send('I have no idea what it going on')
 
 async def send_setter_message(satan_id, use_embed=True):
-    pass
-#TODO
-#    async with SatanBot.lock:
-#        victim_id = SatanBot.satans[satan_id]['victim']
-#        satan = await get_user_by_id(satan_id)
-#        victim = await get_user_by_id(victim_id)
-#        preferences = SatanBot.victims[victim_id]['preferences']
-#        embed_content = f"Name: {preferences['name']}"+ \
-#            f"\n\nAbout Them: {preferences['about_you']}"+ \
-#            f"\n\nPuzzles They Enjoy: {preferences['puzzles_enjoyed']}"+ \
-#            f"\n\nFavorite Puzzle Types: {preferences['favorite_puzzle_types']}"+ \
-#            f"\n\nAnything Else: {preferences['anything_else']}"
-#        if use_embed:
-#            embed = discord.Embed(description=embed_content)
-#            await satan.send('Your victim has been assigned! When finished setting their puzzle, send it in this DM exactly how you wish it to appear (including any attached images and files).', embed=embed)
-#        else:
-#            await satan.send('Your victim has been assigned! When finished setting their puzzle, send it in this DM exactly how you wish it to appear (including any attached images and files)\n\n' + embed_content)
+    async with SatanBot.lock:
+        victims = SatanBot.get_victims_of(satan_id)
+        for victim in victims:
+            satan_user = await get_user_by_id(satan_id)
+            victim_user = await get_user_by_id(victim['user_id'])
+            preferences = victim['preferences']
+            embed_content = f"Name: {preferences['name']}"+ \
+                f"\n\nAbout Them: {preferences['about_you']}"+ \
+                f"\n\nPuzzles They Enjoy: {preferences['puzzles_enjoyed']}"+ \
+                f"\n\nFavorite Puzzle Types: {preferences['favorite_puzzle_types']}"+ \
+                f"\n\nAnything Else: {preferences['anything_else']}"
+            if use_embed:
+                embed = discord.Embed(description=embed_content)
+                await satan_user.send('Your victim has been assigned! When finished setting their puzzle, send it in this DM exactly how you wish it to appear (including any attached images and files).', embed=embed)
+            else:
+                await satan_user.send('Your victim has been assigned! When finished setting their puzzle, send it in this DM exactly how you wish it to appear (including any attached images and files)\n\n' + embed_content)
 
 async def randomize(channel):
     async with SatanBot.lock:
@@ -58,7 +53,7 @@ async def randomize(channel):
         SatanBot.state = State.RANDOMIZING
         satans = SatanBot.get_satans()
         random.shuffle(satans)
-        log('Randomization result: ' + [satan['user_id'] for satan in satans])
+        log('Randomization result: ' + str([satan['user_id'] for satan in satans]))
         n = len(satans)
         for i in range(n):
             satan = satans[i]
@@ -66,8 +61,8 @@ async def randomize(channel):
             victim['satan'] = satan['user_id']
             victim['is_victim'] = True
         SatanBot.state = State.SETTING
-    for satan_id in satan_ids:
-        await send_setter_message(satan_id)
+    for satan in satans:
+        await send_setter_message(satan['user_id'])
 
 #async def emergency(channel, emergency_setters):
 #    setters = json.loads(emergency_setters)
@@ -193,14 +188,14 @@ async def handle_message(message):
                 else:
                     await message.channel.send('You are not currently participating in Secret Satan.')
             elif SatanBot.state == State.RECRUITING or SatanBot.state == State.RANDOMIZING:
-                await message.channel.send('Signed up for Secret Satan.', view=DropOutButtonView)
+                await message.channel.send('Signed up for Secret Satan.', view=DropOutButtonView())
             elif SatanBot.state == State.SETTING:
                 victims = SatanBot.get_victims_of(user_id)
                 if len(victims) == 1:
                     text = 'Your victim: ' + victims[0]['preferences']['name']
                 else:
                     text = 'Your victims: ' + ', '.join([victim['preferences']['name'] for victim in victims])
-                await message.channel.send(text, SubmitView(user, victims))
+                await message.channel.send(text, view=SubmitPuzzleView(user, victims))
 #                puzzle_post = PuzzlePost.fromMessage(message)
 #                satan_id = str(message.author.id)
 #                victim_id = SatanBot.satans[satan_id]['victim']

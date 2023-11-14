@@ -17,7 +17,7 @@ class SignUpButtonView(discord.ui.View):
         super().__init__(timeout=None)
 
     @discord.ui.button(label='Sign Up for Secret Satan', style=discord.ButtonStyle.green, custom_id='persistent_view:SignUpButton')
-    async def green(self, interaction: discord.Interaction, button: discord.ui.Button):
+    async def clicked(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.response.send_modal(SignUpFormModal())
 
 class SignUpFormModal(discord.ui.Modal, title='Sign Up for Secret Puzzle Satan'):
@@ -59,6 +59,7 @@ class SignUpFormModal(discord.ui.Modal, title='Sign Up for Secret Puzzle Satan')
     async def on_submit(self, interaction: discord.Interaction):
         try:
             user_id = str(interaction.user.id)
+            handle = interaction.user.name
             name = interaction.user.name
             if self.form_realName.value != "":
                 name += f" (real name {self.form_realName.value})"
@@ -71,6 +72,7 @@ class SignUpFormModal(discord.ui.Modal, title='Sign Up for Secret Puzzle Satan')
 
             #save in database
             preferences = {
+                "handle": handle,
                 "name": name,
                 "realname": self.form_realName.value,
                 "about_you": self.form_aboutYou.value,
@@ -78,11 +80,11 @@ class SignUpFormModal(discord.ui.Modal, title='Sign Up for Secret Puzzle Satan')
                 "favorite_puzzle_types": self.form_favoritePuzzleTypes.value,
                 "anything_else": self.form_anythingElse.value,
             }
-            if SatanBot.state == State.RECRUITING:
-                async with SatanBot.lock:
+            async with SatanBot.lock:
+                if SatanBot.state == State.RECRUITING:
                     SatanBot.add_satan(user_id, preferences)
-            else:
-                await interaction.response.send_message('Sorry, sign up period has ended.')
+                else:
+                    await interaction.response.send_message('Sorry, sign up period has ended.')
 
             #log as backup
             log(f'Sign up by {user_id}: {preferences}')

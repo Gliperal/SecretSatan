@@ -1,3 +1,13 @@
+import discord
+import json
+import os
+
+from dotenv import load_dotenv
+from util import download_image
+
+load_dotenv()
+TMP_FOLDER = os.getenv('TMP_FOLDER')
+
 class PuzzlePost:
     def __init__(self, content, files, suppress_embeds):
         self.content = content

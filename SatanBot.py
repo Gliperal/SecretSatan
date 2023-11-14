@@ -60,12 +60,13 @@ class SatanBot():
 
     @staticmethod
     def add_satan(user_id, preferences):
-        SatanBot._satans.append({
-            'user_id': user_id,
-            'preferences': preferences,
-            'is_satan': True,
-            'is_victim': True,
-        })
+        satan = SatanBot.get_user(user_id)
+        if satan is None:
+            satan = {'user_id': user_id}
+            SatanBot._satans.append(satan)
+        satan['preferences'] = preferences
+        satan['is_satan'] = True
+        satan['is_victim'] = True
 
     @staticmethod
     def add_emergency_satan(user_id):
