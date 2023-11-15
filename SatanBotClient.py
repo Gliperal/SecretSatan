@@ -12,6 +12,8 @@ from SubmitPuzzle import SubmitPuzzleView
 from SatanBot import SatanBot, State
 from util import admin, message_Admin, get_user_by_id
 
+from send_setter_message import send_setter_message
+
 async def status(channel):
     async with SatanBot.lock:
         if SatanBot.state == State.RECRUITING:
@@ -26,24 +28,6 @@ async def status(channel):
             await channel.send(f'Merry Christmas')
         else:
             await channel.send('I have no idea what it going on')
-
-async def send_setter_message(satan_id, use_embed=True):
-    async with SatanBot.lock:
-        victims = SatanBot.get_victims_of(satan_id)
-        for victim in victims:
-            satan_user = await get_user_by_id(satan_id)
-            victim_user = await get_user_by_id(victim['user_id'])
-            preferences = victim['preferences']
-            embed_content = f"Name: {preferences['name']}"+ \
-                f"\n\nAbout Them: {preferences['about_you']}"+ \
-                f"\n\nPuzzles They Enjoy: {preferences['puzzles_enjoyed']}"+ \
-                f"\n\nFavorite Puzzle Types: {preferences['favorite_puzzle_types']}"+ \
-                f"\n\nAnything Else: {preferences['anything_else']}"
-            if use_embed:
-                embed = discord.Embed(description=embed_content)
-                await satan_user.send('Your victim has been assigned! When finished setting their puzzle, send it in this DM exactly how you wish it to appear (including any attached images and files).', embed=embed)
-            else:
-                await satan_user.send('Your victim has been assigned! When finished setting their puzzle, send it in this DM exactly how you wish it to appear (including any attached images and files)\n\n' + embed_content)
 
 async def randomize(channel):
     async with SatanBot.lock:
@@ -62,7 +46,7 @@ async def randomize(channel):
             victim['is_victim'] = True
         SatanBot.state = State.SETTING
     for satan in satans:
-        await send_setter_message(satan['user_id'])
+        await send_setter_message(satan['user_id'], message='Your victim has been assigned! When finished setting their puzzle, send it in this DM exactly how you wish it to appear (including any attached images and files).')
 
 #async def emergency(channel, emergency_setters):
 #    setters = json.loads(emergency_setters)

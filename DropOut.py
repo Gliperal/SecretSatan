@@ -48,16 +48,7 @@ class DropOutFormModal(discord.ui.Modal, title='Drop Out'):
             async with SatanBot.lock:
                 if SatanBot.state != State.RECRUITING and SatanBot.state != State.SETTING:
                     raise Exception('Unknown state ' + SatanBot.state)
-                satan = SatanBot.get_user(user_id)
-                satan['is_satan'] = False
-                satan['emergency_satan'] = False
-                if SatanBot.state == State.SETTING:
-                    # reassign victims to emergency satans
-                    victims = SatanBot.get_victims_of(user_id)
-                    victims = [v for v in victims if 'gift' not in v]
-                    while len(victims) > 0:
-                        victim = victims.pop()
-                        victim['satan'] = SatanBot.get_underworked_emergency_satans()[0]
+                await SatanBot.remove_satan(user_id)
 
             #log and inform user
             log(f'{user_id} dropped out.')

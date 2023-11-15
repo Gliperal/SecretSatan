@@ -9,7 +9,16 @@ from SatanBot import SatanBot
 load_dotenv()
 ADMIN = os.getenv('ADMIN_ID')
 
+class TestUser:
+    def __init__(self, user_id):
+        self.user_id = user_id
+
+    async def send(self, message, content=None, files=None, suppress_embeds=None, view=None, embed=None):
+        print('Message sent to ' + self.user_id + ': ' + message)
+
 async def get_user_by_id(user_id):
+    if (user_id.startswith('test')):
+        return TestUser(user_id)
     user = SatanBot.client.get_user(user_id)
     if user is None:
         user = await SatanBot.client.fetch_user(user_id)
