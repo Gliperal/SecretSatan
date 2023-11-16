@@ -12,9 +12,22 @@ ADMIN = os.getenv('ADMIN_ID')
 class TestUser:
     def __init__(self, user_id):
         self.user_id = user_id
+        self.name = user_id
 
-    async def send(self, message, content=None, files=None, suppress_embeds=None, view=None, embed=None):
-        print('Message sent to ' + self.user_id + ': ' + message)
+    async def send(self, message=None, content=None, files=None, suppress_embeds=None, view=None, embed=None):
+        print('Message sent to ' + self.user_id + ':')
+        if message is not None:
+            print('\tcontent: ' + str(message))
+        if content is not None:
+            print('\tcontent: ' + str(content))
+        if files is not None:
+            print('\tfiles: ' + str(files))
+        if suppress_embeds is not None:
+            print('\tsuppress_embeds: ' + str(suppress_embeds))
+        if view is not None:
+            print('\tview: ' + str(view))
+        if embed is not None:
+            print('\tembed: ' + str(embed))
 
 async def get_user_by_id(user_id):
     if (user_id.startswith('test')):

@@ -1,6 +1,9 @@
 import discord
 import json
 import os
+import random
+import string
+import time
 
 from dotenv import load_dotenv
 from util import download_image
@@ -40,13 +43,14 @@ class PuzzlePost:
         return f'PuzzlePost({json.dumps(self.toDict())})'
 
     async def send(self, channel, view=None):
+        rand = ''.join(random.choices(string.ascii_uppercase + string.digits, k=40))
         n = len(self.files)
         local_files = []
         if not os.path.exists(TMP_FOLDER):
             os.mkdir(TMP_FOLDER)
         for i in range(n):
             file = self.files[i]
-            path = f'{TMP_FOLDER}/{i}'
+            path = f'{TMP_FOLDER}/{rand}{i}'
             if os.path.exists(path):
                 os.remove(path)
             download_image(file['url'], path)
@@ -58,4 +62,8 @@ class PuzzlePost:
             view=view
         )
         for i in range(n):
-            os.remove(f'{TMP_FOLDER}/{i}')
+            path = f'{TMP_FOLDER}/{rand}{i}'
+            try:
+                os.remove(path)
+            except PermissionError:
+                print('failed to remove ' + path + '... ignoring')
