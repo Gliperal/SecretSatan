@@ -48,36 +48,6 @@ async def randomize(channel):
     for satan in satans:
         await send_setter_message(satan['user_id'], message='Your victim has been assigned! When finished setting their puzzle, send it in this DM exactly how you wish it to appear (including any attached images and files).')
 
-#async def emergency(channel, emergency_setters):
-#    setters = json.loads(emergency_setters)
-#    for i in range(len(setters)):
-#        # make sure each id is a valid id
-#        setters[i] = str(setters[i])
-#        await get_user_by_id(setters[i])
-#    async with SatanBot.lock:
-#        if SatanBot.state != State.SETTING:
-#            await channel.send('Must be in setting state to do that')
-#            return
-#        victim_ids = list(SatanBot.victims.keys())
-#        ungifted = [vid for vid in victim_ids if 'gift' not in SatanBot.victims[vid]]
-#        n = len(ungifted)
-#        if len(setters) > n:
-#            setters = setters[:n]
-#        ungifted_nonsetters = [s for s in ungifted if s not in setters]
-#        ungifted_setters = [s for s in setters if s in ungifted]
-#        gifted_setters = [s for s in setters if s not in ungifted]
-#        order = list(range(n))
-#        random.shuffle(order)
-#        victims = ungifted_setters + ungifted_nonsetters
-#        satans = ungifted_setters + gifted_setters
-#        log(f'Emergency setter assignments:\n\tvictims={victims}\n\tsatans={satans}\n\torder={order}\n')
-#        for i in range(n):
-#            satan_id = satans[order[i]]
-#            victim_id = victims[order[(i + 1) % n]]
-#            SatanBot.satans[satan_id] = {'victim': victim_id}
-#        for satan_id in satans:
-#            await send_setter_message(satan_id)
-
 async def distribute(channel):
     async with SatanBot.lock:
         if SatanBot.state != State.SETTING:
@@ -131,9 +101,6 @@ async def handle_message(message):
         if message.content == 'begin distribution':
             await distribute(message.channel)
             return
-        if message.content.startswith('emergency'):
-            await emergency(message.channel, message.content[9:])
-            return
         if message.content == 'save':
             await SatanBot.save()
             return
@@ -180,10 +147,6 @@ async def handle_message(message):
                 else:
                     text = 'Your victims: ' + ', '.join([victim['preferences']['name'] for victim in victims])
                 await message.channel.send(text, view=SubmitPuzzleView(user, victims))
-#                puzzle_post = PuzzlePost.fromMessage(message)
-#                satan_id = str(message.author.id)
-#                victim_id = SatanBot.satans[satan_id]['victim']
-#                await puzzle_post.send(message.channel, SubmitPuzzleButtonView(victim_id, puzzle_post))
             elif SatanBot.state == State.DELIVERING:
                 await message.channel.send('Merry Christmas!')
 
