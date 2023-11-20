@@ -29,6 +29,33 @@ async def status(channel):
         else:
             await channel.send('I have no idea what it going on')
 
+FORMER_PAIRINGS = {
+    '628472546546679811': ['458538286416134145'], # Aspartacgus: Andrewsarchus
+    '458538286416134145': ['689407844482678830'], # Andrewsarchus: Piatoto
+    '689407844482678830': ['319993684362002442'], # Piatoto: dumediat
+    '319993684362002442': ['804747286936551515'], # dumediat: filuta
+    '804747286936551515': ['774966042412974101'], # filuta: Aaronymous
+    '774966042412974101': ['364960653099925505'], # Aaronymous: grkles
+    '364960653099925505': ['518935964911927320'], # grkles: Zack Szekely
+    '518935964911927320': ['305247910067437569'], # Zack Szekely: RSP (dropped out)
+    '305247910067437569': ['820279935238668289'], # RSP (dropped out): samish
+    '820279935238668289': ['415592212038942730'], # samish: superrabbit
+    '415592212038942730': ['994782206729916467'], # superrabbit: wisteria
+    '994782206729916467': ['372882551737417728', '820279935238668289'], # wisteria: Tyrgannus, samish
+    '997073167547912295': ['372882551737417728'], # Satan's Secretary: Tyrgannus
+    '372882551737417728': ['310555686742261769'], # Tyrgannus: Gliperal
+    '310555686742261769': ['536089278166335492'], # Gliperal: Astral Sky
+    '536089278166335492': ['628472546546679811'], # Astral Sky: Aspartacgus
+}
+
+def valid_shuffle(satans):
+    for i in range(n):
+        satan = satans[i]
+        victim = satans[(i + 1) % n]
+        if victim['user_id'] in FORMER_PAIRINGS[satan['user_id']]:
+            return False
+    return True
+
 async def randomize(channel):
     async with SatanBot.lock:
         if SatanBot.state != State.RECRUITING:
@@ -36,7 +63,10 @@ async def randomize(channel):
             return
         SatanBot.state = State.RANDOMIZING
         satans = SatanBot.get_satans()
-        random.shuffle(satans)
+        while True:
+            random.shuffle(satans)
+            if valid_shuffle(satans):
+                break
         log('Randomization result: ' + str([satan['user_id'] for satan in satans]))
         n = len(satans)
         for i in range(n):
