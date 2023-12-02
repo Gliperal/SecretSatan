@@ -42,17 +42,19 @@ FORMER_PAIRINGS = {
     '820279935238668289': ['415592212038942730'], # samish: superrabbit
     '415592212038942730': ['994782206729916467'], # superrabbit: wisteria
     '994782206729916467': ['372882551737417728', '820279935238668289'], # wisteria: Tyrgannus, samish
-    '997073167547912295': ['372882551737417728'], # Satan's Secretary: Tyrgannus
+    '997073167547912295': ['372882551737417728'],                       # Satan's Secretary: Tyrgannus
     '372882551737417728': ['310555686742261769'], # Tyrgannus: Gliperal
     '310555686742261769': ['536089278166335492'], # Gliperal: Astral Sky
     '536089278166335492': ['628472546546679811'], # Astral Sky: Aspartacgus
 }
 
 def valid_shuffle(satans):
+    n = len(satans)
     for i in range(n):
         satan = satans[i]
         victim = satans[(i + 1) % n]
-        if victim['user_id'] in FORMER_PAIRINGS[satan['user_id']]:
+        if satan['user_id'] in FORMER_PAIRINGS and victim['user_id'] in FORMER_PAIRINGS[satan['user_id']]:
+            log(satan['user_id'] + ' already had ' + victim['user_id'])
             return False
     return True
 
