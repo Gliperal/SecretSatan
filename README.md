@@ -8,7 +8,7 @@ python -m pip install -U pip discord.py python-dotenv requests
 python main.py
 
 .env
-	ADMIN=name#number
+	ADMIN=username
 	ADMIN_ID=00000000000000000
 	DISCORD_TOKEN=[oauth2 token]
 	TMP_FOLDER=/tmp/SecretSatan
