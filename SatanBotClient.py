@@ -106,8 +106,9 @@ async def reminder(channel, reminder_message):
         victims = SatanBot.get_victims()
         ungifted = [v for v in victims if 'gift' not in v]
         for victim in ungifted:
-            satan = await get_user_by_id(victim['satan'])
-            await satan.send(reminder_message)
+            if victim['satan'] is not None:
+                satan = await get_user_by_id(victim['satan'])
+                await satan.send(reminder_message)
 
 async def still_setting(channel):
     async with SatanBot.lock:
@@ -118,8 +119,9 @@ async def still_setting(channel):
         ungifted = [v for v in victims if 'gift' not in v]
         ungifter_names = []
         for victim in ungifted:
-            satan = await get_user_by_id(victim['satan'])
-            ungifter_names.append(satan.name)
+            if victim['satan'] is not None:
+                satan = await get_user_by_id(victim['satan'])
+                ungifter_names.append(satan.name)
         await channel.send(', '.join(ungifter_names))
 
 async def handle_message(message):
