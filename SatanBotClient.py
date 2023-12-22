@@ -124,6 +124,41 @@ async def still_setting(channel):
                 ungifter_names.append(satan.name)
         await channel.send(', '.join(ungifter_names))
 
+async def message_victim(channel, satan, message):
+    message = message.strip()
+    if message == '':
+        await channel.send('Message cannot be blank')
+        return
+    async with SatanBot.lock:
+        all_victims = SatanBot.get_victims()
+        victims = [v for v in all_victims if v['satan'] == satan]
+        victim = None
+        if len(victims) == 0:
+            await channel.send('No victims found')
+            return
+        elif len(victims) == 1:
+            victim = victims[0]
+        else:
+            index = message.split()[0]
+            if not index.isnumeric():
+                victim_list = []
+                i = 0
+                for i, v in enumerate(victims):
+                    victim_list.append(str(i+1) + ' ' + v['preferences']['name'])
+                await channel.send('Multiple victims assigned:\n' + '\n'.join(victim_list) + '\nSpecify which one with `tell victim [number] [message]`')
+                return
+            message = message[len(index):].strip()
+            if message == '':
+                await channel.send('Message cannot be blank')
+                return
+            index = int(index)
+            if index < 1 or index > len(victims):
+                await channel.send('Index out of range')
+                return
+            victim = victims[index - 1]
+        victim_user = await get_user_by_id(victim['user_id'])
+        await victim_user.send('Satan says: ' + message)
+
 async def handle_message(message):
     if message.author == await admin():
         if message.content == 'status':
@@ -159,6 +194,9 @@ async def handle_message(message):
             return
     if message.channel.type == discord.ChannelType.private:
         user_id = str(message.author.id)
+        if message.content.startswith('tell victim'):
+            await message_victim(message.channel, user_id, message.content[11:])
+            return
         async with SatanBot.lock:
             user = SatanBot.get_user(user_id)
             if user is None:
