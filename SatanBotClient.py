@@ -159,6 +159,26 @@ async def message_victim(channel, satan, message):
         victim_user = await get_user_by_id(victim['user_id'])
         await victim_user.send('Satan says: ' + message)
 
+async def message_satan(channel, victim_id, message):
+    message = message.strip()
+    if message == '':
+        await channel.send('Message cannot be blank')
+        return
+    async with SatanBot.lock:
+        victim = SatanBot.get_user(victim_id)
+        if victim is None:
+            await channel.send('Not currently participating')
+            return
+        if victim['satan'] is None:
+            await channel.send('No satan found')
+            return
+        satan_user = await get_user_by_id(victim['satan'])
+        post = 'Victim ' + victim['preferences']['name'] + ' says: ' + message
+        if len(post) > 2000:
+            await channel.send('Message too long')
+            return
+        await satan_user.send(post)
+
 async def handle_message(message):
     if message.author == await admin():
         if message.content == 'status':
@@ -196,6 +216,9 @@ async def handle_message(message):
         user_id = str(message.author.id)
         if message.content.startswith('tell victim'):
             await message_victim(message.channel, user_id, message.content[11:])
+            return
+        if message.content.startswith('tell satan'):
+            await message_satan(message.channel, user_id, message.content[10:])
             return
         async with SatanBot.lock:
             user = SatanBot.get_user(user_id)
