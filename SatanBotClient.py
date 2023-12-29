@@ -109,6 +109,7 @@ async def reminder(channel, reminder_message):
             if victim['satan'] is not None:
                 satan = await get_user_by_id(victim['satan'])
                 await satan.send(reminder_message)
+        await message.channel.send('Reminders sent successfully')
 
 async def still_setting(channel):
     async with SatanBot.lock:
@@ -157,7 +158,13 @@ async def message_victim(channel, satan, message):
                 return
             victim = victims[index - 1]
         victim_user = await get_user_by_id(victim['user_id'])
-        await victim_user.send('Satan says: ' + message)
+        post = 'Satan says: ' + message
+        if len(post) > 2000:
+            await channel.send('Message too long')
+            return
+        await victim_user.send(post)
+        await channel.send('Message sent to ' + victim['preferences']['name'])
+        log('Victim message sent from ' + satan + ' to ' + victim['user_id'] + ': ' + message)
 
 async def message_satan(channel, victim_id, message):
     message = message.strip()
@@ -169,15 +176,18 @@ async def message_satan(channel, victim_id, message):
         if victim is None:
             await channel.send('Not currently participating')
             return
-        if victim['satan'] is None:
+        satan_id = victim['satan']
+        if satan_id is None:
             await channel.send('No satan found')
             return
-        satan_user = await get_user_by_id(victim['satan'])
+        satan_user = await get_user_by_id(satan_id)
         post = 'Victim ' + victim['preferences']['name'] + ' says: ' + message
         if len(post) > 2000:
             await channel.send('Message too long')
             return
         await satan_user.send(post)
+        await channel.send('Message sent to Satan')
+        log('Satan message sent from ' + satan_id + ' to ' + victim_id + ': ' + message)
 
 async def handle_message(message):
     if message.author == await admin():
