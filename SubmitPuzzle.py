@@ -23,6 +23,9 @@ class SubmitPuzzleButton(discord.ui.Button):
         async for message in interaction.channel.history(limit=10):
             if message.author == interaction.user:
                 puzzle_post = PuzzlePost.fromMessage(message)
+                if len(puzzle_post.content) > 2000:
+                    await interaction.response.send_message('Sorry, I can\'t handle messages longer than 2000 characters. Consider attaching a file if you need the extra space.')
+                    return
                 async with SatanBot.lock:
                     victim = SatanBot.get_user(self.victim_id)
                     victim['gift'] = puzzle_post
