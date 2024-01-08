@@ -189,7 +189,7 @@ async def message_satan(message, victim_id, text):
             return
         await post.send(satan_user)
         await message.channel.send('Message sent to Satan')
-        log('Satan message sent from ' + satan_id + ' to ' + victim_id + ': ' + text)
+        log('Satan message sent from ' + victim_id + ' to ' + satan_id + ': ' + text)
 
 async def handle_message(message):
     if message.author == await admin():
