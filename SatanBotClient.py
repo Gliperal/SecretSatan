@@ -123,7 +123,7 @@ async def reminder(channel, reminder_message):
             await channel.send('Must be in setting state to do that')
             return
         if reminder_message == '':
-            await message.channel.send('Missing reminder message')
+            await channel.send('Missing reminder message')
             return
         victims = SatanBot.get_victims()
         ungifted = [v for v in victims if 'gift' not in v]
@@ -131,7 +131,7 @@ async def reminder(channel, reminder_message):
             if victim['satan'] is not None:
                 satan = await get_user_by_id(victim['satan'])
                 await satan.send(reminder_message)
-        await message.channel.send('Reminders sent successfully')
+        await channel.send('Reminders sent successfully')
 
 async def still_setting(channel):
     async with SatanBot.lock:
