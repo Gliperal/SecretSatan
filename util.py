@@ -46,7 +46,7 @@ async def message_Admin(text, embed = None):
 def download_image(url, path):
     r = requests.get(url, stream=True)
     if r.status_code != 200:
-        raise Exception(f'Download failed with status code {r.status_code}')
+        raise Exception(f'Download of {url} failed with status code {r.status_code}')
     with open(path, 'wb') as f:
         r.raw.decode_content = True
         shutil.copyfileobj(r.raw, f)
