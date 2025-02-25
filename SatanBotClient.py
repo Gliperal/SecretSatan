@@ -198,7 +198,7 @@ async def message_victim(message, satan_id, text):
 async def message_satan(message, victim_id, text):
     text = text.strip()
     if text == '':
-        await channel.send('Message cannot be blank')
+        await message.channel.send('Message cannot be blank')
         return
     async with SatanBot.lock:
         victim = SatanBot.get_user(victim_id)
